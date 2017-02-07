@@ -1,6 +1,5 @@
 package com.kocapplication.pixeleye.kockocapp.main.myKockoc;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -10,10 +9,14 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -33,6 +36,8 @@ import com.kocapplication.pixeleye.kockocapp.navigation.NicknameChangeActivity;
 import com.kocapplication.pixeleye.kockocapp.user.ProfileBoardThread;
 import com.kocapplication.pixeleye.kockocapp.user.GetUserInfoThread;
 import com.kocapplication.pixeleye.kockocapp.util.connect.BasicValue;
+import com.kocapplication.pixeleye.kockocapp.write.course.CourseTitleActivity;
+import com.kocapplication.pixeleye.kockocapp.write.newWrite.NewWriteActivity;
 
 
 import java.util.ArrayList;
@@ -64,12 +69,19 @@ public class MyKocKocFragment extends Fragment {
     private LinearLayout scrapButton;
     private LinearLayout neighborButton;
     private LinearLayout courseButton;
-    private ProgressDialog dialog;
+
+    //플로팅 버튼
+    private FrameLayout mainContainer;
+    private TextView writeButton;   //글쓰기 버튼
+    private TextView courseAdd;     //코스짜기 버튼
+    private LinearLayout writeContainer;
+    private TextView boardAdd;      //새글 버튼
+    private TextView continuousAdd; //이어쓰기
+    private Animation up, down;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        dialog = ProgressDialog.show(getActivity(), "", "잠시만 기다려주세요");
         View view = inflater.inflate(R.layout.fragment_mykockoc, container, false);
 
         init(view);
@@ -87,7 +99,7 @@ public class MyKocKocFragment extends Fragment {
 
     private void init(View view) {
         View profile = view.findViewById(R.id.profile_container);
-        View recycler = view.findViewById(R.id.story_recycler_layout);
+        View recycler = view.findViewById(R.id.course_recycler_layout);
 
         //profile
         profileImage = (ImageView) profile.findViewById(R.id.profile_image);
@@ -116,6 +128,17 @@ public class MyKocKocFragment extends Fragment {
         recyclerView.setLayoutManager(manager);
 
         recyclerView.setHasFixedSize(true);
+        //플로팅 버튼
+        mainContainer = (FrameLayout)view.findViewById(R.id.mykockoc_main_container);
+        writeButton = (TextView)view.findViewById(R.id.mykockoc_write_button);
+        courseAdd = (TextView)view.findViewById(R.id.mykockoc_course_add);
+        writeContainer = (LinearLayout)view.findViewById(R.id.mykockoc_write_container);
+        boardAdd = (TextView)view.findViewById(R.id.mykockoc_board_add);
+        continuousAdd = (TextView)view.findViewById(R.id.mykockoc_continuous_add);
+        up = AnimationUtils.loadAnimation(this.getActivity(), R.anim.main_bottom_menu_up);
+        down = AnimationUtils.loadAnimation(this.getActivity(), R.anim.main_bottom_menu_down);
+        buttonListenerSet();
+
     }
 
     private void listenerSet() {
@@ -248,7 +271,6 @@ public class MyKocKocFragment extends Fragment {
 
             adapter.setItems(boardWithImages);
             adapter.notifyDataSetChanged();
-            dialog.cancel();
         }
     }
 
@@ -268,5 +290,48 @@ public class MyKocKocFragment extends Fragment {
                     .bitmapTransform(new CropCircleTransformation(Glide.get(getContext()).getBitmapPool())).into(profileImage);
             ((MainActivity) getActivity()).set_navProfileImg();
         }
+    }
+    private class FloatingMenuListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+            if (v.equals(writeButton)) {
+                if (writeContainer.getVisibility() == View.INVISIBLE)
+                    buttonLayoutUpAnimation();
+                else buttonLayoutDownAnimation();
+            } else if (v.equals(boardAdd)) {
+                Intent intent = new Intent(getActivity(), NewWriteActivity.class);
+                writeButton.callOnClick();
+                getActivity().startActivityForResult(intent, MainActivity.NEW_WRITE_REQUEST_CODE);
+            } else if (v.equals(courseAdd)) {
+                Intent intent = new Intent(getActivity(), CourseTitleActivity.class);
+                startActivity(intent);
+            } else if (v.equals(continuousAdd)) {
+                Intent intent = new Intent(getActivity(), CourseActivity.class);
+                intent.putExtra("flag", CourseActivity.CONTINUOUS_FLAG);
+                writeButton.callOnClick();
+                getActivity().startActivityForResult(intent, MainActivity.CONTINUOUS_WRITE_REQUEST_CODE);
+            }
+        }
+    }
+    private void buttonListenerSet() {
+        View.OnClickListener listener = new FloatingMenuListener();
+        writeButton.setOnClickListener(listener);
+        boardAdd.setOnClickListener(listener);
+        courseAdd.setOnClickListener(listener);
+        continuousAdd.setOnClickListener(listener);
+    }
+
+    private void buttonLayoutUpAnimation() {
+        writeButton.setBackgroundResource(R.drawable.story_close_button);
+        mainContainer.setBackgroundResource(R.color.translucent_80);
+        writeContainer.setVisibility(View.VISIBLE);
+        writeContainer.startAnimation(up);
+    }
+
+    private void buttonLayoutDownAnimation() {
+        writeButton.setBackgroundResource(R.drawable.story_write_button);
+        mainContainer.setBackgroundResource(R.color.transparency);
+        writeContainer.setVisibility(View.INVISIBLE);
+        writeContainer.startAnimation(down);
     }
 }

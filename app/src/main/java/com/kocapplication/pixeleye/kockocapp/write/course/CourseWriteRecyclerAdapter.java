@@ -16,8 +16,11 @@ import android.widget.DatePicker;
 import android.widget.TimePicker;
 
 import com.kocapplication.pixeleye.kockocapp.R;
+import com.kocapplication.pixeleye.kockocapp.main.course.CourseDetailActivity;
 import com.kocapplication.pixeleye.kockocapp.main.search.SearchActivity;
 import com.kocapplication.pixeleye.kockocapp.model.Course;
+import com.kocapplication.pixeleye.kockocapp.util.GlobalApplication;
+import com.kocapplication.pixeleye.kockocapp.util.StringUtil;
 import com.kocapplication.pixeleye.kockocapp.util.connect.BasicValue;
 import com.kocapplication.pixeleye.kockocapp.util.connect.JspConn;
 import com.kocapplication.pixeleye.kockocapp.write.continuousWrite.CourseSelectActivity;
@@ -64,8 +67,8 @@ public class CourseWriteRecyclerAdapter extends RecyclerView.Adapter<CourseWrite
         View.OnClickListener listener = new ItemButtonListener(holder, position);
 
         //이어쓰기 시
-        if (flag == CourseSelectActivity.CONTINUOUS_FLAG) {
-            holder.getDelete().setVisibility(View.GONE);
+        if (flag == CourseSelectActivity.CONTINUOUS_FLAG || flag == CourseDetailActivity.COURSE_DETAIL_FLAG) {
+            holder.getDelete().setVisibility(View.GONE); // 삭제버튼 지움
         }else{ // 코스 작성, 수정 시
             holder.getUploadIcon().setVisibility(View.GONE);
             holder.getDateButton().setOnClickListener(listener);
@@ -86,14 +89,27 @@ public class CourseWriteRecyclerAdapter extends RecyclerView.Adapter<CourseWrite
         holder.getMemo().setOnClickListener(listener);
         holder.getSearch().setOnClickListener(listener);
 
+        int boardNo = 0;
+
+        //중복 체크
+        if(new StringUtil().findDuplicateValue(items)){ // 코스 이름에 중복이 있을 경우 stopoverIndex로 검색
+            boardNo = Integer.parseInt(JspConn.getBoardNo(items.get(position).getCourseNo(), items.get(position).getCoursePosition()));
+        }else{ //중복이 없을 경우 이름으로 검색 (기존 글들과 호환성을 위해 나눔)
+            try {
+                boardNo = Integer.parseInt(JspConn.getBoardNoForEdit(items.get(position).getCourseNo(), items.get(position).getTitle()));
+                Log.e(TAG, "" + boardNo + "/" + items.get(position).getTitle());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         //경유지글이 업로드되면 업로드아이콘 표시
-        if (JspConn.checkDuplBoard(item.getTitle(), BasicValue.getInstance().getUserNo())) {
+        if (boardNo > 0) {
             holder.getUploadIcon().setText("수정");
         } else {
             holder.getUploadIcon().setText("작성");
+            holder.getUploadIcon().setBackground(GlobalApplication.getInstance().getDrawable(GlobalApplication.getInstance(),R.drawable.bg_round_shape_maincolor));
         }
     }
-
 
     @Override
     public int getItemCount() {
@@ -111,7 +127,6 @@ public class CourseWriteRecyclerAdapter extends RecyclerView.Adapter<CourseWrite
     public boolean contain(Course course) {
         for (Course item : items)
             if (item.equals(course)) return true;
-
         return false;
     }
 
@@ -139,6 +154,7 @@ public class CourseWriteRecyclerAdapter extends RecyclerView.Adapter<CourseWrite
 
             } else if (v.equals(holder.getDelete())) {
                 // 해당하는 코스에 글이 있다면 삭제 할것인지 확인  삭제한다면 글은 그대로 두고 코스만 지움
+                Log.e(TAG,"time :"+items.get(position).getTime());
                 if(JspConn.getBoardNoForEdit(items.get(position).getCourseNo(),items.get(position).getTitle()).equals("")){
                     items.remove(position);
                     notifyDataSetChanged();

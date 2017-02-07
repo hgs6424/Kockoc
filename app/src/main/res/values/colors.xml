@@ -9,6 +9,7 @@
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
     <color name="gray">#808080</color>
+    <color name="lightgray">#989898</color>
     <color name="silver">#C0C0C0</color>
     <color name="line_gray">#d9d9d9</color>
 
@@ -17,10 +18,12 @@
     <color name="translucent_70">#70000000</color>
 
     <color name="mainBgColor">#f66c5b</color>
+    <color name="blackBgColor">#494c51</color>
     <color name="tour_filter_bg">#f0f0f0</color>
     <color name="subBgColor">#cf5b4d</color>
     <color name="subBgColor2">#ae4c40</color>
     <color name="subBgColor3">#ececec</color>
+    <color name="subBgColor4">#f66d5b</color>
     <color name="subTextColor">#F39D92</color>
     <color name="mainTextColor">#894040</color>
     <color name="innerTextColor">#3f3c3b</color>

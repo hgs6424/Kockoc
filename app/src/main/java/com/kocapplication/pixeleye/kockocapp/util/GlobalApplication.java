@@ -2,6 +2,11 @@ package com.kocapplication.pixeleye.kockocapp.util;
 
 import android.app.Activity;
 import android.app.Application;
+import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 
 import com.bumptech.glide.Glide;
 import com.kakao.auth.KakaoSDK;
@@ -35,7 +40,7 @@ public class GlobalApplication extends Application {
      *
      * @return singleton 애플리케이션 객체
      */
-    public static GlobalApplication getGlobalApplicationContext() {
+    public static GlobalApplication getInstance() {
         if (instance == null)
             throw new IllegalStateException("this application does not inherit com.kakao.GlobalApplication");
         return instance;
@@ -62,6 +67,21 @@ public class GlobalApplication extends Application {
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
         Glide.get(this).trimMemory(level);
+    }
+    //키보드 숨김
+    public void softKeyboardHide(EditText editText) {
+        InputMethodManager mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        mInputMethodManager.hideSoftInputFromWindow(editText.getWindowToken(), 0);
+        editText.setText("");
+    }
+
+    public Drawable getDrawable(Context context, int id) {
+        final int version = Build.VERSION.SDK_INT;
+        if (version >= Build.VERSION_CODES.LOLLIPOP) {
+            return context.getDrawable(id);
+        } else {
+            return context.getResources().getDrawable(id);
+        }
     }
 }
 

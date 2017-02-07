@@ -8,14 +8,11 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.kocapplication.pixeleye.kockocapp.R;
-import com.kocapplication.pixeleye.kockocapp.model.TourData;
-import com.kocapplication.pixeleye.kockocapp.model.TourDataList;
 import com.kocapplication.pixeleye.kockocapp.model.TourDetailData;
 import com.kocapplication.pixeleye.kockocapp.util.GlobalApplication;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.ArrayList;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -33,12 +30,14 @@ public class TourDetailThread extends Thread {
     private TourDetailRepo tourDetailRepo;
     private TourImageRepo tourImageRepo;
     private TourDetailData data;
-    private String apiKey = GlobalApplication.getGlobalApplicationContext().getResources().getString(R.string.tour_api_key);
+    private String apiKey = GlobalApplication.getInstance().getResources().getString(R.string.tour_api_key);
     private String os = "AND"; // 운영체제 (IOS = 아이폰, AND = 안드로이드, WIN = 윈도우폰)
     private String appName = "Kockoc";
     private String contentId = "";
     private String contentTypeId = "";
     private String type = "json"; // 지우면  xml로 받아옴
+    private String overviewYN = "Y";
+    private String defaultYN = "Y";
     private boolean detail = false; // 상세정보 스레드 끝나면 true
     private boolean img = false; // 이미지 스레드 끝나면 true
 
@@ -47,20 +46,16 @@ public class TourDetailThread extends Thread {
         this.contentId = contentId;
         this.contentTypeId = contentTypeId;
         this.handler = handler;
-        Log.e(TAG,"contentTypeId :"+contentTypeId);
-        Log.e(TAG,"contentid :"+contentId);
     }
-    // TODO: 2016-10-06 69라인 null 잡기
     @Override
     public void run() {
         super.run();
-        Log.e(TAG,"진입");
         data = new TourDetailData();
         try {apiKey = URLDecoder.decode(apiKey,"UTF-8");} catch (UnsupportedEncodingException e) {e.printStackTrace();}
 
         Retrofit client = new Retrofit.Builder().baseUrl("http://api.visitkorea.or.kr/").addConverterFactory(GsonConverterFactory.create()).build();
         TourDetailRepo.tourDetailApiInterface service = client.create(TourDetailRepo.tourDetailApiInterface.class);
-        Call<TourDetailRepo> call = service.get_tour_detail_retrofit(apiKey,os,appName,contentId,contentTypeId,type);
+        Call<TourDetailRepo> call = service.get_tour_detail_retrofit(apiKey,os,appName,contentId,contentTypeId,overviewYN,defaultYN,type);
         call.enqueue(new Callback<TourDetailRepo>() {
             @Override
             public void onResponse(Call<TourDetailRepo> call, Response<TourDetailRepo> response) {
@@ -70,8 +65,8 @@ public class TourDetailThread extends Thread {
                     TourDetailRepo.response.Result header = tourDetailRepo.getResponse().getHeader();
                     TourDetailRepo.response.body.items items = tourDetailRepo.getResponse().getBody().getItems();
                     if(header.getResultCode().equals("0000")){
-                        data.setText(items.getItem().get(0).getInfotext());
-                        data.setTitle(items.getItem().get(0).getInfoname());
+                        data.setText(items.getItem().getOverview());
+                        data.setTitle(items.getItem().getTitle());
                         detail = true;
                         sendMsg();
                     }else{

@@ -22,6 +22,7 @@ import java.util.logging.SimpleFormatter;
  * Created by Han_ on 2016-07-05.
  */
 public class DetailCourseAdapter extends RecyclerView.Adapter<DetailCourseViewHolder> {
+    final static String TAG = DetailCourseAdapter.class.getSimpleName();
     private int coursePo;
     private List<Course> items;
     private View.OnClickListener listener;
@@ -51,7 +52,6 @@ public class DetailCourseAdapter extends RecyclerView.Adapter<DetailCourseViewHo
     @Override
     public void onBindViewHolder(DetailCourseViewHolder holder, int position) {
         Course item = items.get(position);
-
         holder.getCourseName().setText(item.getTitle());
         holder.getCourseTime().setText(item.getTime());
 
@@ -73,11 +73,11 @@ public class DetailCourseAdapter extends RecyclerView.Adapter<DetailCourseViewHo
     public void setItems(List<String> data) throws ParseException {
 
         items = new ArrayList<>();
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         for (int i = 0; i < data.size(); i++) {
             String temp = data.get(i);
-            Log.i("detailcourseadapter",temp);
-            items.add(new Course(temp));
+            String[] arr = temp.split("//");
+            items.add(new Course(arr[0],format.parse(arr[1]),i+1));
         }
     }
 

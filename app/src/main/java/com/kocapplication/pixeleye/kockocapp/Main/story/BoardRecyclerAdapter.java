@@ -2,6 +2,7 @@ package com.kocapplication.pixeleye.kockocapp.main.story;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,9 +17,12 @@ import java.util.List;
  * Created by Han_ on 2016-06-21.
  */
 public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerViewHolder> {
+    public static String TAG = BoardRecyclerAdapter.class.getSimpleName();
     private List<BoardWithImage> items;
     private View.OnClickListener listener;
     private Context mContext;
+    private String flag = "";
+    private View itemView;
 
     public BoardRecyclerAdapter(List<BoardWithImage> data, View.OnClickListener listener, Context mContext) {
         super();
@@ -27,10 +31,19 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerView
         this.listener = listener;
         this.mContext = mContext;
     }
+    public BoardRecyclerAdapter(List<BoardWithImage> data, View.OnClickListener listener, Context mContext,String flag) {
+        super();
+        if (data == null) throw new IllegalArgumentException("DATA MUST NOT BE NULL");
+        this.items = data;
+        this.listener = listener;
+        this.mContext = mContext;
+        this.flag = flag;
+    }
 
     @Override
     public BoardRecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.recycler_item_board, parent, false);
+        if(flag.equals("main"))itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.recycler_item_main_board, parent, false);
+        else itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.recycler_item_board, parent, false);
         itemView.setOnClickListener(listener);
         return new BoardRecyclerViewHolder(itemView);
     }
@@ -83,5 +96,12 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerView
 
     public void setItems(List<BoardWithImage> items) {
         this.items = items;
+    }
+
+    public void deleteItems(int position){
+        if(position > -1) {
+            this.items.remove(position);
+            notifyDataSetChanged();
+        }
     }
 }

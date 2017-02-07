@@ -12,18 +12,17 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.kocapplication.pixeleye.kockocapp.R;
 import com.kocapplication.pixeleye.kockocapp.detail.DetailActivity;
 import com.kocapplication.pixeleye.kockocapp.main.course.CourseFragment;
+import com.kocapplication.pixeleye.kockocapp.main.main.MainFragment;
 import com.kocapplication.pixeleye.kockocapp.main.myKockoc.MyKocKocFragment;
-import com.kocapplication.pixeleye.kockocapp.main.recommend.RecommendFragment;
 import com.kocapplication.pixeleye.kockocapp.main.story.StoryFragment;
 import com.kocapplication.pixeleye.kockocapp.main.tour.TourFragment;
-import com.kocapplication.pixeleye.kockocapp.util.GCM.RegistrationIntentService;
+import com.kocapplication.pixeleye.kockocapp.util.GCM.MyInstanceIDListenerService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +36,14 @@ public class MainActivity extends BaseActivity {
     public static final int CONTINUOUS_WRITE_REQUEST_CODE = 1234;
     private final int PROFILE_SET = 1;
 
-    ViewPageAdapter adapter;
-    ViewPager viewPager;
-    TabLayout tabLayout;
+    private ViewPageAdapter adapter;
+    private ViewPager viewPager;
+    private TabLayout tabLayout;
+    private MainFragment mainFragment;
+    private StoryFragment storyFragment;
+    private CourseFragment courseFragment;
+    private MyKocKocFragment myKocKocFragment;
+    private TourFragment tourFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,11 +57,9 @@ public class MainActivity extends BaseActivity {
 
         ImageView logo = (ImageView) findViewById(R.id.actionbar_image_title);
 
-
         logo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.e(TAG, "LogoToched");
                 viewPager.setCurrentItem(0);
 
             }
@@ -67,15 +69,22 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void init() {
         super.init();
+        mainFragment = new MainFragment();
+        storyFragment = new StoryFragment();
+        courseFragment = new CourseFragment();
+        myKocKocFragment = new MyKocKocFragment();
+        tourFragment = new TourFragment();
 
         List<Fragment> fragments = new ArrayList<Fragment>();
-        fragments.add(new StoryFragment());
-        fragments.add(new TourFragment());
-        fragments.add(new CourseFragment());
-        fragments.add(new MyKocKocFragment());
+        fragments.add(mainFragment);
+        fragments.add(storyFragment);
+        fragments.add(tourFragment);
+        fragments.add(courseFragment);
+        fragments.add(myKocKocFragment);
 
         List<String> titles = new ArrayList<String>();
         titles.add("소식");
+        titles.add("여행후기");
         titles.add("관광");
         titles.add("코스");
         titles.add("내콕콕");
@@ -84,8 +93,8 @@ public class MainActivity extends BaseActivity {
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         adapter = new ViewPageAdapter(getSupportFragmentManager(), fragments, titles);
         viewPager.setAdapter(adapter);
+        viewPager.setOffscreenPageLimit(4);
         tabLayout.setupWithViewPager(viewPager);
-
     }
 
     @Override
@@ -100,7 +109,7 @@ public class MainActivity extends BaseActivity {
 
         public ViewPageAdapter(FragmentManager fm, List<Fragment> fragments, List<String> titles) {
             super(fm);
-            if (fragments == null) throw new IllegalArgumentException("Data Must Not be Null");
+            if (fragments == null) throw new IllegalArgumentException("Data cMust Not be Null");
             this.items = fragments;
             this.titles = titles;
         }
@@ -141,20 +150,20 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         switch (requestCode) {
-            case DetailActivity.DELETE_FLAG: // 글 보고 돌아올때 새로고침 막았음
-                ((StoryFragment) adapter.getItem(0)).refresh();
+            case DETAIL_ACTIVITY_REQUEST_CODE:
+                if(data != null)   // 글 삭제 누를 시 호출
+                    storyFragment.deleteItem(data.getIntExtra("position", -1));
                 break;
             case NEW_WRITE_REQUEST_CODE:
-                ((StoryFragment) adapter.getItem(0)).refresh();
+                storyFragment.refresh();
                 detail_intent(data);
                 break;
             case COURSE_WRITE_ACTIVITY_REQUEST_CODE:
-                ((CourseFragment) adapter.getItem(2)).refresh();
+                try {courseFragment.refresh();}catch (ClassCastException e){Log.e(TAG,e.getMessage());}
                 break;
             case CONTINUOUS_WRITE_REQUEST_CODE:
-                ((StoryFragment) adapter.getItem(0)).refresh();
+                storyFragment.refresh();
                 detail_intent(data);
                 break;
             default:
@@ -178,7 +187,6 @@ public class MainActivity extends BaseActivity {
         startActivity(detail_intent);
     }
 
-
     /**
      * getInstanceIdToken
      * Gcm Token값 DB에 저장
@@ -186,7 +194,7 @@ public class MainActivity extends BaseActivity {
     public void getInstanceIdToken() {
         if (checkPlayServices(this)) {
             // Start IntentService to register this application with GCM.
-            Intent intent = new Intent(this, RegistrationIntentService.class);
+            Intent intent = new Intent(this, MyInstanceIDListenerService.class);
             startService(intent);
         }
     }
@@ -204,5 +212,9 @@ public class MainActivity extends BaseActivity {
             return false;
         }
         return true;
+    }
+
+    public MainFragment getMainFragment() {
+        return mainFragment;
     }
 }

@@ -1,7 +1,6 @@
 package com.kocapplication.pixeleye.kockocapp.detail;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -15,20 +14,20 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.kocapplication.pixeleye.kockocapp.R;
+import com.kocapplication.pixeleye.kockocapp.main.MainActivity;
 import com.kocapplication.pixeleye.kockocapp.model.Course;
 import com.kocapplication.pixeleye.kockocapp.model.Courses;
+import com.kocapplication.pixeleye.kockocapp.util.GlobalApplication;
 import com.kocapplication.pixeleye.kockocapp.util.JsonParser;
 import com.kocapplication.pixeleye.kockocapp.util.connect.BasicValue;
 import com.kocapplication.pixeleye.kockocapp.util.connect.Jsp.Course.JspConn_ReadCourseByCourseNo;
@@ -59,15 +58,14 @@ public class DetailActivity extends AppCompatActivity {
     private Button courseCopy_btn;
     private ToggleButton scrap_btn;
     private ImageButton back_btn;
-    private ImageView menu_btn;
     private Spinner course_spinner;
     private ArrayList<String> course;
-
 
     private int boardNo;
     private int courseNo;
     private String courseTitle;
     private int board_userNo; // 글 작성자 유저번호
+    private int position;
 
     private boolean isTheUser = false; //글의 작성자와 보고있는 유저가 동일인물인지
 
@@ -91,7 +89,6 @@ public class DetailActivity extends AppCompatActivity {
         courseCopy_btn = (Button) findViewById(R.id.btn_detail_course_copy);
         scrap_btn = (ToggleButton) findViewById(R.id.btn_detail_interest);
         back_btn = (ImageButton) findViewById(R.id.btn_detail_back);
-//        menu_btn = (ImageView) findViewById(R.id.detail_menu);
         course_spinner = (Spinner) findViewById(R.id.course_spinner);
 
         setSupportActionBar((Toolbar)findViewById(R.id.tool_bar));
@@ -100,7 +97,6 @@ public class DetailActivity extends AppCompatActivity {
         courseCopy_btn.setOnClickListener(new CourseCopyListener());
         scrap_btn.setOnClickListener(new ScrapListener());
         back_btn.setOnClickListener(new BackListener());
-//        menu_btn.setOnClickListener(new MenuListener());
 
         //작성자와 유저번호가 같으면 코스 복사와 관심글 숨김
         Log.i(TAG, board_userNo + " / " + BasicValue.getInstance().getUserNo());
@@ -138,6 +134,7 @@ public class DetailActivity extends AppCompatActivity {
         boardNo = intent.getIntExtra("boardNo", 0);
         courseNo = intent.getIntExtra("courseNo", 0);
         board_userNo = intent.getIntExtra("board_userNo", 0);
+        position = intent.getIntExtra("position",0); // 글 삭제시 쓰기 위해 스토리 프래그먼트 포지션
     }
 
     private void changeIsTheUser() {
@@ -164,7 +161,7 @@ public class DetailActivity extends AppCompatActivity {
             JspConn_PushGcm.pushGcm(commentString + "|" + boardNo + "&" + courseNo, board_userNo); //gcm
 
             detailFragment.addComment();
-            softKeyboardHide(comment_et);
+            GlobalApplication.getInstance().softKeyboardHide(comment_et);
         }
     }
 
@@ -227,14 +224,6 @@ public class DetailActivity extends AppCompatActivity {
         }
     }
 
-    private class MenuListener implements View.OnClickListener {
-        @Override
-        public void onClick(View v) {
-            Log.d("test","tuched");
-        }
-    }
-
-
     @Override
     public void openOptionsMenu() {
 
@@ -262,8 +251,7 @@ public class DetailActivity extends AppCompatActivity {
             try {
                 courseBoardNo = JspConn.getBoardNoForEdit(courseNo, course.get(position - 1).split("/")[0]);
                 Log.e(TAG, "코스넘버 코스이름 :" + courseNo + "/" + course.get(position - 1).split("/")[0] + "/" + courseBoardNo);
-            } catch (Exception e) {
-            }
+            } catch (Exception e) {}
 
             switch (position) {
                 case 0:
@@ -323,7 +311,9 @@ public class DetailActivity extends AppCompatActivity {
                             public void onClick(
                                     DialogInterface dialoginterface, int i) {
                                 JspConn.boardDelete(boardNo, BasicValue.getInstance().getUserNo());
-                                setResult(DELETE_FLAG);
+                                Intent intent = new Intent();
+                                intent.putExtra("position",position);
+                                setResult(MainActivity.DETAIL_ACTIVITY_REQUEST_CODE,intent);
                                 finish();
                             }
                         })
@@ -334,13 +324,6 @@ public class DetailActivity extends AppCompatActivity {
                             }
                         })
                 .show();
-    }
-
-    //키보드 숨김
-    protected void softKeyboardHide(EditText editText) {
-        InputMethodManager mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        mInputMethodManager.hideSoftInputFromWindow(editText.getWindowToken(), 0);
-        editText.setText("");
     }
 
     private void set_spinner() {

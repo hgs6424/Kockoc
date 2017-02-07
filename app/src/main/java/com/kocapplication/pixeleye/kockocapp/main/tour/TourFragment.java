@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.kocapplication.pixeleye.kockocapp.R;
+import com.kocapplication.pixeleye.kockocapp.main.MainActivity;
 import com.kocapplication.pixeleye.kockocapp.main.tour.retrofit.AreaThread;
 import com.kocapplication.pixeleye.kockocapp.main.tour.retrofit.KeywordThread;
 import com.kocapplication.pixeleye.kockocapp.model.TourData;
@@ -116,10 +117,12 @@ public class TourFragment extends Fragment {
             refreshLayout.setRefreshing(false);
             items = (TourDataList) msg.getData().getSerializable("THREAD");
             tourDataList = items.getTourDataList();
+            ((MainActivity)getActivity()).getMainFragment().setTourData(tourDataList);
             adapter.setItems(tourDataList);
             adapter.notifyDataSetChanged();
         }
     }
+
     /**
      * 하단 새로고침 데이터를 받아오는 핸들러, pageNo를 1씩 늘린다.
      */

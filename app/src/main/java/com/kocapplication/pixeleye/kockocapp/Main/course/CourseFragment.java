@@ -23,6 +23,7 @@ import com.kocapplication.pixeleye.kockocapp.R;
 import com.kocapplication.pixeleye.kockocapp.main.MainActivity;
 import com.kocapplication.pixeleye.kockocapp.model.Courses;
 import com.kocapplication.pixeleye.kockocapp.util.connect.BasicValue;
+import com.kocapplication.pixeleye.kockocapp.util.connect.Jsp.Course.JspConn_ReadAllCourseThread;
 import com.kocapplication.pixeleye.kockocapp.write.course.CourseTitleActivity;
 import com.kocapplication.pixeleye.kockocapp.write.course.CourseWriteActivity;
 
@@ -48,7 +49,7 @@ public class CourseFragment extends Fragment {
         init(view);
 
         Handler handler = new CourseHandler();
-        Thread thread = new CourseThread(handler);
+        Thread thread = new JspConn_ReadAllCourseThread(handler);
         thread.start();
 
         return view;
@@ -58,7 +59,7 @@ public class CourseFragment extends Fragment {
         courseAdd = (TextView) view.findViewById(R.id.course_add);
         courseAdd.setOnClickListener(new ButtonListener());
 
-        View container = view.findViewById(R.id.story_recycler_layout);
+        View container = view.findViewById(R.id.course_recycler_layout);
         refreshLayout = (SwipeRefreshLayout) container.findViewById(R.id.refresh_layout);
         recyclerView = (RecyclerView) container.findViewById(R.id.recycler_view);
 
@@ -80,7 +81,7 @@ public class CourseFragment extends Fragment {
         if (refreshLayout == null) return;
         refreshLayout.setRefreshing(true);
         Handler handler = new CourseHandler();
-        Thread thread = new CourseThread(handler);
+        Thread thread = new JspConn_ReadAllCourseThread(handler);
         thread.start();
     }
 
@@ -103,9 +104,7 @@ public class CourseFragment extends Fragment {
         @Override
         public void onClick(View v) {
             int position = recyclerView.getChildAdapterPosition(v);
-
-            Intent intent = new Intent(getActivity(), CourseWriteActivity.class);
-            intent.putExtra("FLAG", CourseWriteActivity.ADJUST_FLAG);
+            Intent intent = new Intent(getActivity(), CourseDetailActivity.class);
             intent.putExtra("COURSES", adapter.getItems().get(position));
             getActivity().startActivityForResult(intent, MainActivity.COURSE_WRITE_ACTIVITY_REQUEST_CODE);
         }
@@ -113,15 +112,15 @@ public class CourseFragment extends Fragment {
         @Override
         public boolean onLongClick(View v) {
             int position = recyclerView.getChildAdapterPosition(v);
-
-            AlertDialog dialog = new AlertDialog.Builder(getActivity())
-                    .setTitle("코스 삭제")
-                    .setMessage("코스를 삭제하시겠습니까")
-                    .setPositiveButton("예", new DialogClickListener(position))
-                    .setNegativeButton("아니오", new DialogClickListener(position))
-                    .create();
-            dialog.show();
-
+            if(adapter.getItems().get(position).getUserNo() == BasicValue.getInstance().getUserNo()){
+                AlertDialog dialog = new AlertDialog.Builder(getActivity())
+                        .setTitle("코스 삭제")
+                        .setMessage("코스를 삭제하시겠습니까")
+                        .setPositiveButton("예", new DialogClickListener(position))
+                        .setNegativeButton("아니오", new DialogClickListener(position))
+                        .create();
+                dialog.show();
+            }
             return true;
         }
     }

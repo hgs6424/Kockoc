@@ -1,6 +1,5 @@
 package com.kocapplication.pixeleye.kockocapp.main.story;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -52,14 +51,12 @@ public class StoryFragment extends Fragment {
     private LinearLayout writeContainer;
     private TextView boardAdd;      //새글 버튼
     private TextView continuousAdd; //이어쓰기
-    private ProgressDialog dialog;
 
     private ArrayList<BoardWithImage> initialData;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        dialog = ProgressDialog.show(getActivity(),"","잠시만 기다려주세요");
     }
 
     @Nullable
@@ -87,7 +84,7 @@ public class StoryFragment extends Fragment {
             Thread thread = new StoryThread(handler);
             refreshLayout.setRefreshing(true);
             thread.start();
-        } else dialog.cancel();
+        }
 
         return view;
     }
@@ -104,7 +101,7 @@ public class StoryFragment extends Fragment {
         continuousAdd = (TextView) view.findViewById(R.id.story_continuous_add);
         buttonListenerSet();
 
-        View includeView = view.findViewById(R.id.story_recycler_layout);
+        View includeView = view.findViewById(R.id.course_recycler_layout);
         refreshLayout = (SwipeRefreshLayout) includeView.findViewById(R.id.refresh_layout);
         recyclerView = (RecyclerView) includeView.findViewById(R.id.recycler_view);
 
@@ -154,6 +151,11 @@ public class StoryFragment extends Fragment {
         writeContainer.startAnimation(down);
     }
 
+    public void deleteItem(int position){
+        adapter.deleteItems(position);
+        adapter.notifyDataSetChanged();
+    }
+
     private class RefreshListener implements SwipeRefreshLayout.OnRefreshListener {
         @Override
         public void onRefresh() {
@@ -175,6 +177,7 @@ public class StoryFragment extends Fragment {
                 intent.putExtra("boardNo", boardWithImage.getBasicAttributes().getBoardNo());
                 intent.putExtra("courseNo", boardWithImage.getBasicAttributes().getCourseNo());
                 intent.putExtra("board_userNo", boardWithImage.getBasicAttributes().getUserNo());
+                intent.putExtra("position",position);
                 getActivity().startActivityForResult(intent, MainActivity.DETAIL_ACTIVITY_REQUEST_CODE);
             } else {
                 buttonLayoutDownAnimation();
@@ -229,15 +232,16 @@ public class StoryFragment extends Fragment {
             if (msg.what == 0) {
                 Snackbar.make(refreshLayout, "데이터를 불러오는데 실패하였습니다. 새로고침을 해주세요", Snackbar.LENGTH_SHORT).show();
                 return;
-        }
+            }
 
-        ArrayList<BoardWithImage> boardWithImages = (ArrayList<BoardWithImage>) msg.getData().getSerializable("THREAD");
+            ArrayList<BoardWithImage> boardWithImages = (ArrayList<BoardWithImage>) msg.getData().getSerializable("THREAD");
 
-        initialData = boardWithImages;
-        adapter.setItems(boardWithImages);
-        adapter.notifyDataSetChanged();
-        refreshLayout.setRefreshing(false);
-        dialog.cancel();
+            ((MainActivity)getActivity()).getMainFragment().setStoryData(boardWithImages);
+
+            initialData = boardWithImages;
+            adapter.setItems(boardWithImages);
+            adapter.notifyDataSetChanged();
+            refreshLayout.setRefreshing(false);
         }
     }
 
@@ -261,4 +265,5 @@ public class StoryFragment extends Fragment {
             refreshLayout.setRefreshing(false);
         }
     }
+
 }
